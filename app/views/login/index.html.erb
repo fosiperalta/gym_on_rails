@@ -1,2 +1,116 @@
+<!DOCTYPE html>
+<html>
 <h1>Gym on Rails</h1>
 <strong><%= Time.now %></strong>
+
+<script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.2.2/d3.min.js'></script>
+<script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js'></script>
+
+<style>
+svg {
+	width: 850px;
+	display: block;
+	margin: 50px auto 0 auto;
+}
+
+</style>
+
+<body>
+
+<script>
+
+var data = {
+	dimensions: {
+		time: {
+			members: [
+				{label: 'April'},
+				{label: 'May'},
+				{label: 'June'},
+				{label: 'July'},
+				{label: 'August'}
+			]
+		}
+	},
+	tuples: [
+		{
+			time: 'April',
+			value: 10
+		},
+		{
+			time: 'May',
+			value: 4
+		},
+		{
+			time: 'June',
+			value: 8
+		},
+		{
+			time: 'July',
+			value: 2
+		},
+		{
+			time: 'August',
+			value: 7
+		}
+	]
+};
+
+var svgWidth = 850,
+	svgHeight = 500;
+
+var svg = d3.select('body')
+	.append('svg')
+	.attr('width', svgWidth)
+	.attr('height', svgHeight);
+
+var chart = svg.append('g');
+
+var height = 300,
+	tuplesByMonth = _.indexBy(data.tuples, 'time'),
+	scale = d3.scaleLinear().domain([0, _.max(_.pluck(data.tuples, 'value'))]),
+	chartWidth = 300,
+	barwidthWithGap = chartWidth / data.dimensions.time.members.length,
+	gap = 5,
+	x = 0,
+	y = 10;
+
+chart.append('rect')
+	.attr('x', x)
+	.attr('y', y)
+	.attr('width', chartWidth)
+	.attr('height', height)
+	.attr('fill', '#ddd');
+
+chart.append('g').selectAll('rect')
+	.data(_.pluck(data.dimensions.time.members, 'label'))
+	.enter()
+	.append('rect')
+	.attr('y', function(d) {
+		return y + scale.range([height, 0])(tuplesByMonth[d].value);
+	})
+	.attr('x', function(d, i) { return x + gap / 2 + i * (barwidthWithGap); })
+	.attr('width', barwidthWithGap - gap)
+	.attr('height', function(d) {
+		return scale.range([0, height])(tuplesByMonth[d].value);
+	})
+	.attr('fill', '#c99')
+	.attr('stroke', '#a77');
+
+chart.append('g')
+	.attr("transform", "translate("+x+","+y+")")
+	.call(d3.axisLeft(scale.range([height, 0])));
+chart.append('g')
+	.attr("transform", "translate("+x+","+(y+height)+")")
+	.call(d3.axisBottom(d3.scaleLinear()
+							.domain([0, 2 * data.dimensions.time.members.length])
+							.range([0, chartWidth]))
+		.ticks(2 * data.dimensions.time.members.length)
+		.tickFormat(function(i) { if(i%2 == 0) return ''; else return data.dimensions.time.members[(i-1)/2].label; })
+	);
+
+chart.attr('transform', 'translate(' + (svgWidth - chartWidth) / 2 + ')');
+
+</script>
+
+</body>
+</html>
